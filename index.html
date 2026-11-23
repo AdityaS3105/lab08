@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile Registration & Display</title>
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Load Lucide Icons for clean UI -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Smooth view transitions */
+    .fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Custom scrollbar for code blocks */
+    pre::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    pre::-webkit-scrollbar-track {
+      background: #1e293b;
+      border-radius: 0.5rem;
+    }
+    pre::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 0.5rem;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-100 selection:text-brand-700">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
+          <i data-lucide="user-check" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="font-bold text-slate-900 text-base sm:text-lg tracking-tight block leading-none">UserCapture</span>
+          <span class="text-xs text-slate-500 hidden sm:inline">Form &amp; LocalStorage Demo</span>
+        </div>
+      </div>
+
+      <!-- View Switcher Navigation -->
+      <nav class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80" aria-label="Page Views">
+        <button id="nav-form" onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all bg-white text-brand-600 shadow-sm">
+          <i data-lucide="file-edit" class="w-4 h-4"></i>
+          <span>Registration</span>
+        </button>
+        <button id="nav-display" onclick="switchView('display')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900">
+          <i data-lucide="id-card" class="w-4 h-4"></i>
+          <span>Display Page</span>
+          <span id="saved-badge" class="hidden w-2 h-2 rounded-full bg-emerald-500"></span>
+        </button>
+        <button id="nav-code" onclick="switchView('code')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900">
+          <i data-lucide="code-2" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Multi-Page Code</span>
+          <span class="sm:hidden">Code</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Toast Notification Banner (Replaces alert()) -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Main Content Container -->
+  <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+    <!-- ==========================================
+         VIEW 1: CAPTURE FORM (index.html simulation)
+         ========================================== -->
+    <section id="view-form" class="fade-in">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- Form Header -->
+        <div class="bg-gradient-to-r from-brand-600 to-indigo-700 px-6 py-7 sm:px-8 text-white">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/15 text-white mb-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+                Step 1: Data Capture (index.html)
+              </span>
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Personal Information Form</h1>
+              <p class="text-indigo-100 text-sm mt-1">Fill in your details below to store and view them on the summary page.</p>
+            </div>
+            <button type="button" onclick="fillDemoData()" class="self-start sm:self-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition cursor-pointer">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              Auto-Fill Demo
+            </button>
+          </div>
+        </div>
+
+        <!-- Form Body -->
+        <form id="userForm" novalidate class="p-6 sm:p-8 space-y-6">
+          
+          <!-- Row 1: Full Name & Mail ID -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Name -->
+            <div>
+              <label for="fullName" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Full Name <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i data-lucide="user" class="w-4 h-4"></i>
+                </div>
+                <input type="text" id="fullName" name="fullName" placeholder="e.g., Aarav Sharma" required
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+              </div>
+              <p id="err-fullName" class="hidden text-xs text-rose-600 mt-1.5 flex items-center gap-1"></p>
+            </div>
+
+            <!-- Mail ID -->
+            <div>
+              <label for="mailId" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Mail ID (Email Address) <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i data-lucide="mail" class="w-4 h-4"></i>
+                </div>
+                <input type="email" id="mailId" name="mailId" placeholder="e.g., aarav.sharma@example.com" required
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+              </div>
+              <p id="err-mailId" class="hidden text-xs text-rose-600 mt-1.5 flex items-center gap-1"></p>
+            </div>
+          </div>
+
+          <!-- Row 2: Mobile Number & Gender -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Mobile Number -->
+            <div>
+              <label for="mobileNumber" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Mobile Number <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i data-lucide="phone" class="w-4 h-4"></i>
+                </div>
+                <input type="tel" id="mobileNumber" name="mobileNumber" placeholder="e.g., +91 9876543210" required
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+              </div>
+              <p id="err-mobileNumber" class="hidden text-xs text-rose-600 mt-1.5 flex items-center gap-1"></p>
+            </div>
+
+            <!-- Gender (Radio Group) -->
+            <div>
+              <span class="block text-sm font-medium text-slate-700 mb-1.5">
+                Gender <span class="text-rose-500">*</span>
+              </span>
+              <div class="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label="Gender">
+                <label class="cursor-pointer">
+                  <input type="radio" name="gender" value="Male" class="peer sr-only">
+                  <div class="py-2.5 px-3 text-center text-sm font-medium rounded-xl border border-slate-300 text-slate-600 peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:text-brand-700 hover:bg-slate-50 transition">
+                    Male
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="gender" value="Female" class="peer sr-only">
+                  <div class="py-2.5 px-3 text-center text-sm font-medium rounded-xl border border-slate-300 text-slate-600 peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:text-brand-700 hover:bg-slate-50 transition">
+                    Female
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="gender" value="Other" class="peer sr-only">
+                  <div class="py-2.5 px-3 text-center text-sm font-medium rounded-xl border border-slate-300 text-slate-600 peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:text-brand-700 hover:bg-slate-50 transition">
+                    Other
+                  </div>
+                </label>
+              </div>
+              <p id="err-gender" class="hidden text-xs text-rose-600 mt-1.5 flex items-center gap-1"></p>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="border-t border-slate-100 pt-2">
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-1.5">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+              Location Details
+            </h2>
+
+            <!-- Row 3: City, State, Country -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <!-- City -->
+              <div>
+                <label for="city" class="block text-sm font-medium text-slate-700 mb-1.5">
+                  City <span class="text-rose-500">*</span>
+                </label>
+                <input type="text" id="city" name="city" placeholder="e.g., Bengaluru" required
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+                <p id="err-city" class="hidden text-xs text-rose-600 mt-1.5 flex items-center gap-1"></p>
+              </div>
+
+              <!-- State -->
+              <div>
+                <label for="state" class="block text-sm font-medium text-slate-700 mb-1.5">
+                  State / Province <span class="text-rose-500">*</span>
+                </label>
+                <input type="text" id="state" name="state" placeholder="e.g., Karnataka" required
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+                <p id="err-state" class="hidden text-xs text-rose-600 mt-1.5 flex items-center gap-1"></p>
+              </div>
+
+              <!-- Country -->
+              <div>
+                <label for="country" class="block text-sm font-medium text-slate-700 mb-1.5">
+                  Country <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                  <select id="country" name="country" required
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-900 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition appearance-none pr-9">
+                    <option value="">Select Country</option>
+                    <option value="India">India</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Germany">Germany</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Singapore">Singapore</option>
+                    <option value="United Arab Emirates">United Arab Emirates</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p id="err-country" class="hidden text-xs text-rose-600 mt-1.5 flex items-center gap-1"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Action Buttons -->
+          <div class="pt-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+            <button type="button" onclick="resetForm()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              Clear Form
+            </button>
+            <button type="submit" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm shadow-brand-600/20 transition flex items-center justify-center gap-2 cursor-pointer">
+              <span>Save &amp; View Details</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 2: DISPLAY PAGE (display.html simulation)
+         ========================================== -->
+    <section id="view-display" class="hidden fade-in">
+      <!-- Empty State (shown if no data in localStorage yet) -->
+      <div id="empty-state" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="inbox" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900">No User Details Found</h2>
+        <p class="text-slate-500 text-sm max-w-md mx-auto mt-1.5 mb-6">
+          There is currently no user record stored in <code class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-700 font-mono text-xs">localStorage</code>. Fill out the registration form first to view the output here.
+        </p>
+        <button onclick="switchView('form')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm transition cursor-pointer">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          Go to Registration Form
+        </button>
+      </div>
+
+      <!-- Populated Profile Card -->
+      <div id="profile-card" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- Banner -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-7 sm:px-8 text-white">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/15 text-white mb-2">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-200"></i>
+                Step 2: Output Page (display.html)
+              </span>
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight" id="disp-header-name">User Profile</h1>
+              <p class="text-emerald-100 text-sm mt-1" id="disp-timestamp">Retrieved from browser localStorage</p>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <button onclick="editRecord()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-white text-teal-800 hover:bg-emerald-50 shadow-sm transition cursor-pointer">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+                Back / Edit
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="p-6 sm:p-8">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            
+            <!-- Full Name -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                <i data-lucide="user" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">Full Name</span>
+                <p id="disp-fullName" class="text-base font-semibold text-slate-900 mt-0.5 break-words">—</p>
+              </div>
+            </div>
+
+            <!-- Gender -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                <i data-lucide="users" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">Gender</span>
+                <p id="disp-gender" class="text-base font-semibold text-slate-900 mt-0.5">—</p>
+              </div>
+            </div>
+
+            <!-- Mobile Number -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <i data-lucide="phone" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">Mobile Number</span>
+                <p id="disp-mobileNumber" class="text-base font-semibold text-slate-900 mt-0.5 break-all">—</p>
+              </div>
+            </div>
+
+            <!-- Mail ID -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                <i data-lucide="mail" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">Mail ID</span>
+                <p id="disp-mailId" class="text-base font-semibold text-slate-900 mt-0.5 break-all">—</p>
+              </div>
+            </div>
+
+            <!-- City -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                <i data-lucide="building-2" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">City</span>
+                <p id="disp-city" class="text-base font-semibold text-slate-900 mt-0.5 break-words">—</p>
+              </div>
+            </div>
+
+            <!-- State -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                <i data-lucide="map" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">State</span>
+                <p id="disp-state" class="text-base font-semibold text-slate-900 mt-0.5 break-words">—</p>
+              </div>
+            </div>
+
+            <!-- Country (Full width on sm+) -->
+            <div class="sm:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <i data-lucide="globe" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">Country</span>
+                <p id="disp-country" class="text-base font-semibold text-slate-900 mt-0.5 break-words">—</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <button onclick="deleteRecord()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-medium text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              Clear Stored Data
+            </button>
+            <button onclick="editRecord()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              Back to Edit Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 3: MULTI-PAGE CODE STRUCTURE INSPECTOR
+         ========================================== -->
+    <section id="view-code" class="hidden fade-in space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-100">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Multi-Page HTML &amp; JS Structure</h2>
+            <p class="text-slate-500 text-sm mt-1">
+              Use these two separate files (<code class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-700 font-mono text-xs">index.html</code> and <code class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-700 font-mono text-xs">display.html</code>) in the same folder for a traditional multi-page setup.
+            </p>
+          </div>
+          <!-- File Tab Selector -->
+          <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 self-start">
+            <button id="tab-index" onclick="switchCodeTab('index')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-brand-600 shadow-sm transition cursor-pointer">
+              index.html
+            </button>
+            <button id="tab-display" onclick="switchCodeTab('display')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">
+              display.html
+            </button>
+          </div>
+        </div>
+
+        <!-- Code Box: index.html -->
+        <div id="code-box-index" class="mt-6">
+          <div class="flex items-center justify-between bg-slate-800 text-slate-300 px-4 py-2.5 rounded-t-xl border-b border-slate-700">
+            <span class="text-xs font-mono flex items-center gap-2">
+              <i data-lucide="file-code" class="w-4 h-4 text-brand-400"></i>
+              index.html (Form Capture &amp; Save to localStorage)
+            </span>
+            <button onclick="copySourceCode('source-index')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium transition cursor-pointer">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              Copy Code
+            </button>
+          </div>
+          <pre class="bg-slate-900 text-slate-100 p-4 sm:p-5 rounded-b-xl overflow-x-auto text-xs sm:text-sm font-mono leading-relaxed"><code id="source-index"></code></pre>
+        </div>
+
+        <!-- Code Box: display.html -->
+        <div id="code-box-display" class="hidden mt-6">
+          <div class="flex items-center justify-between bg-slate-800 text-slate-300 px-4 py-2.5 rounded-t-xl border-b border-slate-700">
+            <span class="text-xs font-mono flex items-center gap-2">
+              <i data-lucide="file-code" class="w-4 h-4 text-emerald-400"></i>
+              display.html (Read from localStorage &amp; Render)
+            </span>
+            <button onclick="copySourceCode('source-display')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium transition cursor-pointer">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              Copy Code
+            </button>
+          </div>
+          <pre class="bg-slate-900 text-slate-100 p-4 sm:p-5 rounded-b-xl overflow-x-auto text-xs sm:text-sm font-mono leading-relaxed"><code id="source-display"></code></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-5 mt-auto">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+      <p>Captures Name, Gender, Mobile, Mail ID, City, State &amp; Country using HTML5 &amp; JavaScript.</p>
+      <p>Data persists locally via <code class="font-mono text-slate-700">window.localStorage</code>.</p>
+    </div>
+  </footer>
+
+  <!-- Hidden textarea used for reliable clipboard copying inside iframes -->
+  <textarea id="clipboard-helper" class="sr-only" aria-hidden="true"></textarea>
+
+  <script>
+    // Storage key constant
+    const STORAGE_KEY = 'capturedUserProfileData';
+
+    // Raw multi-page source code templates for the Code Inspector view
+    const INDEX_HTML_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Registration Form</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; }
+    .container { max-width: 500px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; color: #333; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input[type="text"], input[type="email"], input[type="tel"], select {
+      width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;
+    }
+    .radio-group label { display: inline-block; font-weight: normal; margin-right: 15px; }
+    button { width: 100%; padding: 12px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #4338ca; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>User Information Form</h2>
+    <form id="registrationForm">
+      <div class="form-group">
+        <label for="name">Full Name:</label>
+        <input type="text" id="name" required placeholder="Enter full name">
+      </div>
+
+      <div class="form-group radio-group">
+        <label>Gender:</label>
+        <label><input type="radio" name="gender" value="Male" required> Male</label>
+        <label><input type="radio" name="gender" value="Female"> Female</label>
+        <label><input type="radio" name="gender" value="Other"> Other</label>
+      </div>
+
+      <div class="form-group">
+        <label for="mobile">Mobile Number:</label>
+        <input type="tel" id="mobile" pattern="[0-9+\\s-]{10,15}" required placeholder="e.g., 9876543210">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Mail ID:</label>
+        <input type="email" id="email" required placeholder="e.g., user@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="city">City:</label>
+        <input type="text" id="city" required placeholder="Enter city">
+      </div>
+
+      <div class="form-group">
+        <label for="state">State:</label>
+        <input type="text" id="state" required placeholder="Enter state">
+      </div>
+
+      <div class="form-group">
+        <label for="country">Country:</label>
+        <select id="country" required>
+          <option value="">-- Select Country --</option>
+          <option value="India">India</option>
+          <option value="United States">United States</option>
+          <option value="United Kingdom">United Kingdom</option>
+          <option value="Canada">Canada</option>
+          <option value="Australia">Australia</option>
+        </select>
+      </div>
+
+      <button type="submit">Submit &amp; View Details</button>
+    </form>
+  </div>
+
+  <script>
+    // Pre-fill form if user clicked "Edit" from display.html
+    window.addEventListener('DOMContentLoaded', () => {
+      const existing = JSON.parse(localStorage.getItem('userDetails'));
+      if (existing) {
+        document.getElementById('name').value = existing.name || '';
+        document.getElementById('mobile').value = existing.mobile || '';
+        document.getElementById('email').value = existing.email || '';
+        document.getElementById('city').value = existing.city || '';
+        document.getElementById('state').value = existing.state || '';
+        document.getElementById('country').value = existing.country || '';
+        if (existing.gender) {
+          const radio = document.querySelector(\`input[name="gender"][value="\${existing.gender}"]\`);
+          if (radio) radio.checked = true;
+        }
+      }
+    });
+
+    // Capture form submission, save to localStorage, and redirect to display.html
+    document.getElementById('registrationForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const userData = {
+        name: document.getElementById('name').value.trim(),
+        gender: document.querySelector('input[name="gender"]:checked').value,
+        mobile: document.getElementById('mobile').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        city: document.getElementById('city').value.trim(),
+        state: document.getElementById('state').value.trim(),
+        country: document.getElementById('country').value
+      };
+
+      // Save JSON string into localStorage
+      localStorage.setItem('userDetails', JSON.stringify(userData));
+
+      // Navigate to the second page
+      window.location.href = 'display.html';
+    });
+  <\/script>
+</body>
+</html>`;
+
+    const DISPLAY_HTML_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submitted User Details</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; }
+    .card { max-width: 500px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; color: #0f766e; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    td { padding: 10px 8px; border-bottom: 1px solid #eee; }
+    td.label { font-weight: bold; color: #475569; width: 40%; }
+    .btn-back { display: inline-block; margin-top: 20px; padding: 10px 18px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; }
+    .btn-back:hover { background: #4338ca; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Submitted User Information</h2>
+    <div id="outputArea"></div>
+    <a href="index.html" class="btn-back">&larr; Back / Edit Details</a>
+  </div>
+
+  <script>
+    // Retrieve data from localStorage when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+      const rawData = localStorage.getItem('userDetails');
+      const outputArea = document.getElementById('outputArea');
+
+      if (!rawData) {
+        outputArea.innerHTML = '<p>No user data found. Please fill out the form first.</p>';
+        return;
+      }
+
+      const user = JSON.parse(rawData);
+
+      outputArea.innerHTML = \`
+        <table>
+          <tr><td class="label">Full Name:</td><td>\${user.name}</td></tr>
+          <tr><td class="label">Gender:</td><td>\${user.gender}</td></tr>
+          <tr><td class="label">Mobile Number:</td><td>\${user.mobile}</td></tr>
+          <tr><td class="label">Mail ID:</td><td>\${user.email}</td></tr>
+          <tr><td class="label">City:</td><td>\${user.city}</td></tr>
+          <tr><td class="label">State:</td><td>\${user.state}</td></tr>
+          <tr><td class="label">Country:</td><td>\${user.country}</td></tr>
+        </table>
+      \`;
+    });
+  <\/script>
+</body>
+</html>`;
+
+    // Initialize application on DOM load
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+
+      // Populate code inspector blocks safely as textContent
+      document.getElementById('source-index').textContent = INDEX_HTML_TEMPLATE;
+      document.getElementById('source-display').textContent = DISPLAY_HTML_TEMPLATE;
+
+      // Check if existing data is in localStorage and populate form + display
+      const savedData = getStoredUser();
+      if (savedData) {
+        populateFormFields(savedData);
+        renderDisplayView(savedData);
+        document.getElementById('saved-badge').classList.remove('hidden');
+      }
+
+      // Attach live input listeners to clear field errors as the user types
+      ['fullName', 'mailId', 'mobileNumber', 'city', 'state', 'country'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => clearFieldError(id));
+        el.addEventListener('change', () => clearFieldError(id));
+      });
+      document.querySelectorAll('input[name="gender"]').forEach(radio => {
+        radio.addEventListener('change', () => clearFieldError('gender'));
+      });
+    });
+
+    // Safe localStorage getter
+    function getStoredUser() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        console.error('Error reading localStorage:', e);
+        return null;
+      }
+    }
+
+    // View Switching Logic (Simulates multi-page navigation cleanly)
+    function switchView(viewName) {
+      const views = ['form', 'display', 'code'];
+      views.forEach(v => {
+        const section = document.getElementById(`view-${v}`);
+        const navBtn = document.getElementById(`nav-${v}`);
+
+        if (v === viewName) {
+          section.classList.remove('hidden');
+          navBtn.classList.add('bg-white', 'text-brand-600', 'shadow-sm');
+          navBtn.classList.remove('text-slate-600', 'hover:text-slate-900');
+        } else {
+          section.classList.add('hidden');
+          navBtn.classList.remove('bg-white', 'text-brand-600', 'shadow-sm');
+          navBtn.classList.add('text-slate-600', 'hover:text-slate-900');
+        }
+      });
+
+      if (viewName === 'display') {
+        renderDisplayView(getStoredUser());
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Field Validation Helpers
+    function setFieldError(fieldId, message) {
+      const errEl = document.getElementById(`err-${fieldId}`);
+      const inputEl = document.getElementById(fieldId);
+      if (errEl) {
+        errEl.innerHTML = `<i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i><span>${message}</span>`;
+        errEl.classList.remove('hidden');
+        lucide.createIcons();
+      }
+      if (inputEl) {
+        inputEl.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-500/20');
+        inputEl.classList.remove('border-slate-300');
+      }
+    }
+
+    function clearFieldError(fieldId) {
+      const errEl = document.getElementById(`err-${fieldId}`);
+      const inputEl = document.getElementById(fieldId);
+      if (errEl) {
+        errEl.classList.add('hidden');
+        errEl.textContent = '';
+      }
+      if (inputEl) {
+        inputEl.classList.remove('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-500/20');
+        inputEl.classList.add('border-slate-300');
+      }
+    }
+
+    // Validate all form inputs
+    function validateForm() {
+      let isValid = true;
+
+      const fullName = document.getElementById('fullName').value.trim();
+      const mailId = document.getElementById('mailId').value.trim();
+      const mobileNumber = document.getElementById('mobileNumber').value.trim();
+      const genderChecked = document.querySelector('input[name="gender"]:checked');
+      const city = document.getElementById('city').value.trim();
+      const state = document.getElementById('state').value.trim();
+      const country = document.getElementById('country').value;
+
+      // Clear previous errors
+      ['fullName', 'mailId', 'mobileNumber', 'gender', 'city', 'state', 'country'].forEach(clearFieldError);
+
+      // 1. Name validation
+      if (!fullName) {
+        setFieldError('fullName', 'Please enter your full name.');
+        isValid = false;
+      } else if (fullName.length < 2) {
+        setFieldError('fullName', 'Name must be at least 2 characters long.');
+        isValid = false;
+      }
+
+      // 2. Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!mailId) {
+        setFieldError('mailId', 'Please enter your email address.');
+        isValid = false;
+      } else if (!emailRegex.test(mailId)) {
+        setFieldError('mailId', 'Please enter a valid Mail ID (e.g., name@domain.com).');
+        isValid = false;
+      }
+
+      // 3. Mobile validation (allows optional +, spaces, hyphens, 10-15 digits)
+      const digitsOnly = mobileNumber.replace(/\D/g, '');
+      if (!mobileNumber) {
+        setFieldError('mobileNumber', 'Please enter your mobile number.');
+        isValid = false;
+      } else if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+        setFieldError('mobileNumber', 'Enter a valid mobile number (10 to 15 digits).');
+        isValid = false;
+      }
+
+      // 4. Gender validation
+      if (!genderChecked) {
+        setFieldError('gender', 'Please select your gender.');
+        isValid = false;
+      }
+
+      // 5. City validation
+      if (!city) {
+        setFieldError('city', 'Please enter your city.');
+        isValid = false;
+      }
+
+      // 6. State validation
+      if (!state) {
+        setFieldError('state', 'Please enter your state or province.');
+        isValid = false;
+      }
+
+      // 7. Country validation
+      if (!country) {
+        setFieldError('country', 'Please select your country.');
+        isValid = false;
+      }
+
+      return isValid;
+    }
+
+    // Handle Form Submission
+    document.getElementById('userForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      if (!validateForm()) {
+        showToast('Please fix the highlighted errors before submitting.', 'error');
+        return;
+      }
+
+      const userProfile = {
+        fullName: document.getElementById('fullName').value.trim(),
+        gender: document.querySelector('input[name="gender"]:checked').value,
+        mobileNumber: document.getElementById('mobileNumber').value.trim(),
+        mailId: document.getElementById('mailId').value.trim(),
+        city: document.getElementById('city').value.trim(),
+        state: document.getElementById('state').value.trim(),
+        country: document.getElementById('country').value,
+        savedAt: new Date().toLocaleString()
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
+        document.getElementById('saved-badge').classList.remove('hidden');
+        showToast('User information saved to localStorage!', 'success');
+        switchView('display');
+      } catch (err) {
+        console.error('Storage failed:', err);
+        showToast('Unable to save data to localStorage.', 'error');
+      }
+    });
+
+    // Populate Display View from saved object
+    function renderDisplayView(data) {
+      const emptyState = document.getElementById('empty-state');
+      const profileCard = document.getElementById('profile-card');
+
+      if (!data) {
+        emptyState.classList.remove('hidden');
+        profileCard.classList.add('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      profileCard.classList.remove('hidden');
+
+      document.getElementById('disp-header-name').textContent = data.fullName;
+      document.getElementById('disp-timestamp').textContent = `Saved in localStorage • ${data.savedAt || 'Just now'}`;
+      document.getElementById('disp-fullName').textContent = data.fullName;
+      document.getElementById('disp-gender').textContent = data.gender;
+      document.getElementById('disp-mobileNumber').textContent = data.mobileNumber;
+      document.getElementById('disp-mailId').textContent = data.mailId;
+      document.getElementById('disp-city').textContent = data.city;
+      document.getElementById('disp-state').textContent = data.state;
+      document.getElementById('disp-country').textContent = data.country;
+    }
+
+    // Populate Form Fields (used on load & when clicking Back/Edit)
+    function populateFormFields(data) {
+      if (!data) return;
+      document.getElementById('fullName').value = data.fullName || '';
+      document.getElementById('mailId').value = data.mailId || '';
+      document.getElementById('mobileNumber').value = data.mobileNumber || '';
+      document.getElementById('city').value = data.city || '';
+      document.getElementById('state').value = data.state || '';
+      document.getElementById('country').value = data.country || '';
+
+      if (data.gender) {
+        const radio = document.querySelector(`input[name="gender"][value="${data.gender}"]`);
+        if (radio) radio.checked = true;
+      }
+    }
+
+    // Back / Edit handler
+    function editRecord() {
+      const data = getStoredUser();
+      if (data) {
+        populateFormFields(data);
+      }
+      switchView('form');
+      showToast('Loaded saved record for editing.', 'info');
+    }
+
+    // Clear form fields
+    function resetForm() {
+      document.getElementById('userForm').reset();
+      ['fullName', 'mailId', 'mobileNumber', 'gender', 'city', 'state', 'country'].forEach(clearFieldError);
+      showToast('Form inputs cleared.', 'info');
+    }
+
+    // Delete stored record from localStorage
+    function deleteRecord() {
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('saved-badge').classList.add('hidden');
+      renderDisplayView(null);
+      showToast('Stored user data removed from localStorage.', 'info');
+    }
+
+    // Auto-fill sample data for quick testing
+    function fillDemoData() {
+      const sample = {
+        fullName: 'Ananya Deshmukh',
+        gender: 'Female',
+        mobileNumber: '+91 98450 12345',
+        mailId: 'ananya.deshmukh@example.com',
+        city: 'Bengaluru',
+        state: 'Karnataka',
+        country: 'India'
+      };
+      populateFormFields(sample);
+      ['fullName', 'mailId', 'mobileNumber', 'gender', 'city', 'state', 'country'].forEach(clearFieldError);
+      showToast('Sample data filled. Click "Save & View Details" to test!', 'info');
+    }
+
+    // Multi-Page Code Inspector Tab Switcher
+    function switchCodeTab(tab) {
+      const idxBox = document.getElementById('code-box-index');
+      const dispBox = document.getElementById('code-box-display');
+      const idxTab = document.getElementById('tab-index');
+      const dispTab = document.getElementById('tab-display');
+
+      if (tab === 'index') {
+        idxBox.classList.remove('hidden');
+        dispBox.classList.add('hidden');
+        idxTab.classList.add('bg-white', 'text-brand-600', 'shadow-sm');
+        idxTab.classList.remove('text-slate-600');
+        dispTab.classList.remove('bg-white', 'text-brand-600', 'shadow-sm');
+        dispTab.classList.add('text-slate-600');
+      } else {
+        dispBox.classList.remove('hidden');
+        idxBox.classList.add('hidden');
+        dispTab.classList.add('bg-white', 'text-brand-600', 'shadow-sm');
+        dispTab.classList.remove('text-slate-600');
+        idxTab.classList.remove('bg-white', 'text-brand-600', 'shadow-sm');
+        idxTab.classList.add('text-slate-600');
+      }
+    }
+
+    // Copy code to clipboard using document.execCommand('copy') for iframe compatibility
+    function copySourceCode(elementId) {
+      const codeText = document.getElementById(elementId).textContent;
+      const helper = document.getElementById('clipboard-helper');
+      helper.value = codeText;
+      helper.classList.remove('sr-only');
+      helper.select();
+      helper.setSelectionRange(0, 99999);
+      try {
+        document.execCommand('copy');
+        showToast('Code copied to clipboard!', 'success');
+      } catch (err) {
+        showToast('Failed to copy code.', 'error');
+      }
+      helper.classList.add('sr-only');
+    }
+
+    // Non-blocking Toast Message Box (replaces alert())
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+
+      const styles = {
+        success: 'bg-emerald-900 text-white border-emerald-700',
+        error: 'bg-rose-900 text-white border-rose-700',
+        info: 'bg-slate-900 text-white border-slate-700'
+      };
+      const icons = {
+        success: 'check-circle',
+        error: 'alert-triangle',
+        info: 'info'
+      };
+
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+      toast.innerHTML = `<i data-lucide="${icons[type] || icons.info}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
